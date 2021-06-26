@@ -220,6 +220,27 @@ handle_txn_close(TSCont cont, TSEvent event ATS_UNUSED, void *edata)
         create_stat_name(stat_name, remap, "status_unknown");
         stat_add(stat_name.data(), 1, config->persist_type, config->stat_creation_mutex);
       }
+      // save cache status in stats
+      int lookupStatus;
+      TSHttpTxnCacheLookupStatusGet(txn, &lookupStatus);
+      switch (lookupStatus) {
+      case TS_CACHE_LOOKUP_MISS:
+        create_stat_name(stat_name, remap, "cache_lookup_miss");
+        break;
+      case TS_CACHE_LOOKUP_HIT_STALE:
+        create_stat_name(stat_name, remap, "cache_loookup_hit_stale");
+        break;
+      case TS_CACHE_LOOKUP_HIT_FRESH:
+        create_stat_name(stat_name, remap, "cache_lookup_hit_refresh");
+        break;
+      case TS_CACHE_LOOKUP_SKIPPED:
+        create_stat_name(stat_name, remap, "cache_lookup_skipped");
+        break;
+      default:
+        create_stat_name(stat_name, remap, "cache_lookup_none");
+        break;
+      }
+      stat_add(stat_name.data(), 1, config->persist_type, config->stat_creation_mutex);
 
       if (nullptr != effective_hostname) {
         TSfree(effective_hostname);
